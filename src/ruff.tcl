@@ -2747,6 +2747,8 @@ proc ruff::document {namespaces args} {
 
     variable gFormatter
 
+    # 25/06 RL: Added -pattern arg to filder proc/classes to be documented in the selected namespace
+    #           Added -md_skiplevel used to remove some level of headers for markdown output
     array set opts {
         -compact 0
         -excludeprocs {}
@@ -2765,6 +2767,7 @@ proc ruff::document {namespaces args} {
         -section 3tcl
         -preeval ""
         -diagrammer "kroki ditaa"
+        -md_skiplevel 0
     }
 
     array set opts $args

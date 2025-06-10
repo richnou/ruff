@@ -21,6 +21,7 @@ oo::class create ruff::formatter::Markdown {
     variable Header;          # Common header
     variable Footer;          # Common footer
     variable HeaderLevels;    # Header levels for various headers
+    variable MdSkipLevel;
 
     # NOTE: NavigationLinks are currently recorded but not used since
     # there is no standard way to have a navigation pane or ToC in
@@ -28,11 +29,12 @@ oo::class create ruff::formatter::Markdown {
     variable NavigationLinks; # Navigation links forming ToC
 
     constructor args {
+        set MdSkipLevel 0
         set HeaderLevels {
-            class 3
-            proc 4
+            class  3
+            proc   4
             method 4
-            nonav 5
+            nonav  5
             parameters 5
         }
         next {*}$args
@@ -128,6 +130,10 @@ oo::class create ruff::formatter::Markdown {
         # is also added to the collection of navigation links.
 
         set level    [dict get $HeaderLevels $type]
+        set level [expr $level - $MdSkipLevel]
+        if {$level <=0} {
+            return
+        }
         set atx      [string repeat # $level]
         set ns       [namespace qualifiers $fqn]
         set anchor   [my Anchor $fqn]
@@ -158,9 +164,20 @@ oo::class create ruff::formatter::Markdown {
         #  scope   - The documentation scope of the content.
         #  tooltip - Tooltip to display in navigation link.
 
+        #puts "-> heading $text (level=$level)"
+
+        set txtlevel $level
         if {![string is integer -strict $level]} {
             set level [dict get $HeaderLevels $level]
         }
+
+        # Reduce level if requested
+        #puts "Skip Level for $txtlevel: $level - $MdSkipLevel ($text)"
+        set level [expr $level - $MdSkipLevel]
+        if {$level <=0} {
+            return
+        }
+
         set do_link [expr {$level >= [dict get $HeaderLevels nonav] ? false : true}]
         set atx [string repeat # $level]
 

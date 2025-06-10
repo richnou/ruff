@@ -12,6 +12,7 @@ oo::class create ruff::formatter::Formatter {
     variable SortedNamespaces;  # Exactly what it says
     variable FigureCounter; # Counter for figure captions
 
+
     constructor {} {
         # Base class for output formatters.
         namespace path [linsert [namespace path] 0 ::ruff ::ruff::private]
@@ -44,7 +45,7 @@ oo::class create ruff::formatter::Formatter {
 
     method Begin {} {
         # Begins the actual generation of the documentation set.
-        # 
+        #
         # This method should be overridden by the concrete formatter.
         # It should generate appropriate content for the header and other
         # parts that are not dependent on the actual content.
@@ -1059,6 +1060,7 @@ oo::class create ruff::formatter::Formatter {
 
         set Namespaces [dict keys $ns_info]
 
+        # 25/06 RL: -md_skiplevel used to remove some level of headers for markdown output
         array set Options \
             [list \
                  -compact 0 \
@@ -1069,9 +1071,19 @@ oo::class create ruff::formatter::Formatter {
                  -title "" \
                  -sortnamespaces 1 \
                  -autopunctuate 0 \
+                 -md_skiplevel 0 \
                 ]
 
         array set Options $args
+
+        # Skip Level is only applicable for Markdown output, make sure it is 0 in all other cases
+        if {[info object class [self]]!="::ruff::formatter::Markdown"} {
+            set Options(-md_skiplevel) 0
+        } else {
+            #puts "Setting skip level to $Options(-md_skiplevel)"
+            variable MdSkipLevel
+            set MdSkipLevel $Options(-md_skiplevel)
+        }
 
         if {![info exists Options(-makeindex)]} {
             set Options(-makeindex) [expr {$Options(-pagesplit) ne "none"}]
@@ -1124,6 +1136,8 @@ oo::class create ruff::formatter::Formatter {
 
             set nprocs [dict size [dict get $ns_info $ns procs]]
             set nclasses [dict size [dict get $ns_info $ns classes]]
+
+
             # Horrible hack. Some namespaces are not really namespaces but are there
             # just as documentation sections and do not contain actual commands.
             # Strip the leading :: from them for display purposes.
