@@ -191,7 +191,7 @@ namespace eval ruff {
         proc ruff::sample::character_at {text {pos 0}} {
             # Get the character from a string.
             #  text - Text string.
-            #  pos  - Character position. 
+            #  pos  - Character position.
             # The command will treat negative values of $pos as offset from
             # the end of the string.
             #
@@ -209,7 +209,7 @@ namespace eval ruff {
             }
         }
         ```
-        You can see the generated documentation for the above at 
+        You can see the generated documentation for the above at
         [sample::character_at].
 
         The first block of comments within a procedure *before
@@ -395,7 +395,8 @@ namespace eval ruff {
         but other formatters might not.
 
         Text enclosed in `[]` is checked whether it references a section heading
-        or a program element name (namespaces, classes, methods, procedures). If
+        or a program element name (namespaces, classes, methods, procedures). If
+
         so, it is replaced by a link to the section or documentation of that
         element. If the text is not a fully qualified name, it is treated
         relative to the namespace or class within whose documentation the link
@@ -423,7 +424,7 @@ namespace eval ruff {
         A line containing 3 or more consecutive backquote (\`) characters with
         only leading whitespace starts a fenced block. The block is terminated
         by the same sequence of backquotes. By default, formatters will pass
-        all intervening lines through verbatim to the output. 
+        all intervening lines through verbatim to the output.
 
         However, the leading line of a fenced block can contain
         additional options for specialized processing. The general form
@@ -780,7 +781,7 @@ proc ruff::private::fqn! {name} {
 proc ruff::private::ns_qualifiers {fqn} {
     # This differs from namespace qualifiers in that
     # - it expects fully qualified names
-    # - for globals it returns "::", not "" 
+    # - for globals it returns "::", not ""
     fqn! $fqn
     set fqn [ns_canonicalize $fqn]
     set quals [namespace qualifiers $fqn]
@@ -1167,7 +1168,7 @@ proc ruff::private::parse_fence_options {option_line} {
     # The returned dictionary maps each specified option to a value
     # with a special key -command holding the rest of the line, i.e. the
     # command and its arguments
-    # 
+    #
     # Returns a dictionary of the option values.
 
     set n [llength $option_line]
@@ -1645,7 +1646,7 @@ proc ruff::private::parse_lines {lines scope {mode proc}} {
     # synopsis - a list of alternating procname and parameter list
     #           definitions to be used as synopsis instead of the generated
     #           one.
-    #            
+    #
     # Not all elements may be present in the dictionary.
     # A paragraph is returned as a list of lines.
 
@@ -1729,14 +1730,14 @@ proc ruff::private::distill_docstring {text} {
     #
     # If any tabs are present, they are replaced with spaces assuming
     # a tab stop width of 8.
-    
+
     set lines {}
     set state init
     foreach line [split $text \n] {
         set line [textutil::tabify::untabify2 $line]
         if {[regexp {^\s*$} $line]} {
             #ruff
-            # Initial blank lines are skipped and 
+            # Initial blank lines are skipped and
             # multiple empty lines are compressed into one empty line.
             if {$state eq "collecting"} {
                 lappend lines ""
@@ -1772,7 +1773,7 @@ proc ruff::private::distill_body {text} {
     # returns the documentation lines as a list.
     # text - text to be processed to collect all documentation lines.
     #
-    # The first block of contiguous comment lines preceding the 
+    # The first block of contiguous comment lines preceding the
     # first line of code are treated as documentation lines.
     # If any tabs are present, they are replaced with spaces assuming
     # a tab stop width of 8.
@@ -2354,7 +2355,7 @@ proc ruff::private::get_metaclasses {} {
 }
 
 proc ruff::private::extract_procs_and_classes {pattern args} {
-    # Extracts metainformation for procs and classes 
+    # Extracts metainformation for procs and classes
     #
     # pattern - glob-style pattern to match against procedure and class names
     # -excludeclasses REGEXP - If specified, any classes whose names
@@ -2481,7 +2482,12 @@ proc ruff::private::extract_namespace {ns args} {
 
     # Note the canonicalize is required to handle ns == "::" which
     # will create :::: in matching pattern otherwise
-    set pattern [ns_canonicalize ${ns}::*]
+    array set opts {
+        -pattern *
+    }
+    array set opts $args
+    set pattern [ns_canonicalize ${ns}::]$opts(-pattern)
+
     set result [extract_procs_and_classes $pattern {*}$args]
     set preamble [list ]
     if {[info exists ${ns}::_ruff_preamble]} {
@@ -2750,6 +2756,7 @@ proc ruff::document {namespaces args} {
         -include {procs classes}
         -includeprivate false
         -includesource false
+        -pattern *
         -preamble ""
         -recurse false
         -pagesplit none
@@ -2853,11 +2860,12 @@ proc ruff::document {namespaces args} {
         # is different so override what was passed in.
         lappend args -preamble [extract_docstring $opts(-preamble) ::]
     }
-    set classprocinfodict [extract_namespaces $namespaces \
-                               -excludeprocs $opts(-excludeprocs) \
-                               -excludeclasses $opts(-excludeclasses) \
-                               -include $opts(-include) \
-                               -includeprivate $opts(-includeprivate)]
+    set classprocinfodict [extract_namespaces   $namespaces \
+                               -excludeprocs    $opts(-excludeprocs) \
+                               -excludeclasses  $opts(-excludeclasses) \
+                               -include         $opts(-include) \
+                               -includeprivate  $opts(-includeprivate)\
+                               -pattern         $opts(-pattern)]
 
     set docs [$formatter generate_document $classprocinfodict {*}$args]
     if {$opts(-makeindex)} {
@@ -2903,7 +2911,7 @@ proc ruff::private::wrap_text {text args} {
     # and begins with the specified prefix.
     # text - the string to be reformatted
     # The following options may be specified:
-    # -width INTEGER - the maximum width of each line including the prefix 
+    # -width INTEGER - the maximum width of each line including the prefix
     #  (defaults to 60)
     # -prefix STRING - a string that every line must begin with. Defaults
     #  to an empty string.
